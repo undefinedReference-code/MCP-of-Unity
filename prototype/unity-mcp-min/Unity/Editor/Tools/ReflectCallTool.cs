@@ -10,8 +10,9 @@ using UnityEngine;
 namespace UnityMcpMin.Editor.Tools
 {
     /// <summary>
-    /// Minimal reflection-driven entrypoint for editor-side invocation.
-    /// This intentionally limits API surface with allowlist/denylist controls.
+    /// Minimal reflection-driven editor entrypoint: resolve target instance, bind JSON args to CLR types,
+    /// then perform get/set/invoke. Business operations are expressed only via parameters (targetType, member, args),
+    /// not via app-level switches like "setPosition". Mode dispatch uses a static handler map (get/set/invoke only).
     /// </summary>
     public static class ReflectCallTool
     {
@@ -31,6 +32,21 @@ namespace UnityMcpMin.Editor.Tools
         };
 
         private const BindingFlags CommonFlags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
+
+        private delegate object ReflectModeHandler(
+            Type targetType,
+            string memberName,
+            JArray args,
+            bool dryRun,
+            JObject objectSelector);
+
+        private static readonly Dictionary<string, ReflectModeHandler> ReflectModeHandlers =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["get"] = (t, m, _, d, s) => ExecuteGet(t, m, d, s),
+                ["set"] = ExecuteSet,
+                ["invoke"] = ExecuteInvoke
+            };
 
         public static object HandleCommand(JObject parameters)
         {
@@ -69,13 +85,13 @@ namespace UnityMcpMin.Editor.Tools
 
             try
             {
-                return mode switch
+                if (!ReflectModeHandlers.TryGetValue(mode, out var handler))
                 {
-                    "get" => HandleGet(targetType, memberName, dryRun, objectSelector),
-                    "set" => HandleSet(targetType, memberName, args, dryRun, objectSelector),
-                    "invoke" => HandleInvoke(targetType, memberName, args, dryRun, objectSelector),
-                    _ => Error($"Unsupported mode '{mode}'. Use get, set, or invoke.")
-                };
+                    var supported = string.Join(", ", ReflectModeHandlers.Keys.OrderBy(k => k));
+                    return Error($"Unsupported mode '{mode}'. Supported: {supported}.");
+                }
+
+                return handler(targetType, memberName, args, dryRun, objectSelector);
             }
             catch (Exception ex)
             {
@@ -83,7 +99,7 @@ namespace UnityMcpMin.Editor.Tools
             }
         }
 
-        private static object HandleGet(Type targetType, string memberName, bool dryRun, JObject objectSelector)
+        private static object ExecuteGet(Type targetType, string memberName, bool dryRun, JObject objectSelector)
         {
             var property = targetType.GetProperty(memberName, CommonFlags);
             if (property != null)
@@ -144,7 +160,7 @@ namespace UnityMcpMin.Editor.Tools
             return Error($"No property or field '{memberName}' found on '{targetType.FullName}'.");
         }
 
-        private static object HandleSet(Type targetType, string memberName, JArray args, bool dryRun, JObject objectSelector)
+        private static object ExecuteSet(Type targetType, string memberName, JArray args, bool dryRun, JObject objectSelector)
         {
             if (args.Count != 1)
             {
@@ -226,7 +242,7 @@ namespace UnityMcpMin.Editor.Tools
             return Error($"No writable property/field '{memberName}' found on '{targetType.FullName}'.");
         }
 
-        private static object HandleInvoke(Type targetType, string memberName, JArray args, bool dryRun, JObject objectSelector)
+        private static object ExecuteInvoke(Type targetType, string memberName, JArray args, bool dryRun, JObject objectSelector)
         {
             var candidates = targetType
                 .GetMethods(CommonFlags)
@@ -469,6 +485,26 @@ namespace UnityMcpMin.Editor.Tools
                     return true;
                 }
 
+                if (targetType == typeof(Type))
+                {
+                    var typeName = token.ToString()?.Trim();
+                    if (string.IsNullOrWhiteSpace(typeName))
+                    {
+                        error = "Type argument requires a non-empty string (full name or simple name).";
+                        return false;
+                    }
+
+                    var resolvedType = ResolveConcreteComponentType(typeName, out var typeError);
+                    if (resolvedType == null)
+                    {
+                        error = typeError;
+                        return false;
+                    }
+
+                    converted = resolvedType;
+                    return true;
+                }
+
                 if (typeof(UnityEngine.Object).IsAssignableFrom(targetType))
                 {
                     var obj = token as JObject;
@@ -512,6 +548,76 @@ namespace UnityMcpMin.Editor.Tools
             return AllowedNamespacePrefixes.Any(prefix => ns.StartsWith(prefix, StringComparison.Ordinal));
         }
 
+        private static bool IsConcreteComponent(Type type)
+        {
+            return typeof(Component).IsAssignableFrom(type)
+                   && type is { IsAbstract: false, IsInterface: false, ContainsGenericParameters: false };
+        }
+
+        /// <summary>
+        /// Resolves a Unity Component type from user/script assemblies for AddComponent(Type) and similar.
+        /// </summary>
+        private static Type ResolveConcreteComponentType(string typeName, out string error)
+        {
+            error = string.Empty;
+
+            var resolved = ResolveType(typeName, out var ambiguity);
+            if (ambiguity.Length > 0)
+            {
+                error = $"Ambiguous type '{typeName}'. Use a fully qualified type name.";
+                return null;
+            }
+
+            if (resolved != null && IsConcreteComponent(resolved))
+            {
+                return resolved;
+            }
+
+            var matches = new List<Type>();
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Type[] types;
+                try
+                {
+                    types = asm.GetTypes();
+                }
+                catch
+                {
+                    continue;
+                }
+
+                foreach (var candidate in types)
+                {
+                    if (!IsConcreteComponent(candidate))
+                    {
+                        continue;
+                    }
+
+                    if (string.Equals(candidate.Name, typeName, StringComparison.Ordinal) ||
+                        string.Equals(candidate.FullName, typeName, StringComparison.Ordinal))
+                    {
+                        matches.Add(candidate);
+                    }
+                }
+            }
+
+            var distinct = matches.Distinct().ToArray();
+            if (distinct.Length > 1)
+            {
+                error =
+                    $"Ambiguous component type '{typeName}'. Candidates: {string.Join(", ", distinct.Select(t => t.FullName).OrderBy(n => n))}";
+                return null;
+            }
+
+            if (distinct.Length == 0)
+            {
+                error = $"No concrete Component type matched '{typeName}'.";
+                return null;
+            }
+
+            return distinct[0];
+        }
+
         private static Type ResolveType(string typeName, out string[] ambiguity)
         {
             ambiguity = Array.Empty<string>();
@@ -552,13 +658,26 @@ namespace UnityMcpMin.Editor.Tools
 
         private static string BuildSignature(MemberInfo memberInfo)
         {
-            return memberInfo switch
+            if (memberInfo is PropertyInfo propertyInfo)
             {
-                PropertyInfo p => $"{p.PropertyType.Name} {p.DeclaringType?.Name}.{p.Name}",
-                FieldInfo f => $"{f.FieldType.Name} {f.DeclaringType?.Name}.{f.Name}",
-                MethodInfo m => $"{m.ReturnType.Name} {m.DeclaringType?.Name}.{m.Name}({string.Join(", ", m.GetParameters().Select(x => x.ParameterType.Name + " " + x.Name))})",
-                _ => memberInfo.Name
-            };
+                return $"{propertyInfo.PropertyType.Name} {propertyInfo.DeclaringType?.Name}.{propertyInfo.Name}";
+            }
+
+            if (memberInfo is FieldInfo fieldInfo)
+            {
+                return $"{fieldInfo.FieldType.Name} {fieldInfo.DeclaringType?.Name}.{fieldInfo.Name}";
+            }
+
+            if (memberInfo is MethodInfo methodInfo)
+            {
+                var parameters = string.Join(
+                    ", ",
+                    methodInfo.GetParameters().Select(parameter => $"{parameter.ParameterType.Name} {parameter.Name}"));
+
+                return $"{methodInfo.ReturnType.Name} {methodInfo.DeclaringType?.Name}.{methodInfo.Name}({parameters})";
+            }
+
+            return memberInfo.Name;
         }
 
         private static object NormalizeValue(object value)

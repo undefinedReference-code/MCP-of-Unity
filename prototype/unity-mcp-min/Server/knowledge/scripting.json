@@ -1,0 +1,31 @@
+{
+  "domain": "scripting",
+  "templates": [
+    {
+      "title": "Add MonoBehaviour by type name",
+      "when": "Attach an existing C# behaviour to a GameObject.",
+      "keywords": ["script", "component", "attach", "add", "挂载", "脚本"],
+      "requestTemplate": {
+        "mode": "invoke",
+        "targetType": "UnityEngine.GameObject",
+        "member": "AddComponent",
+        "args": ["YourNamespace.DemoBehaviour"],
+        "objectSelector": { "gameObjectName": "DemoCube" },
+        "dryRun": false
+      }
+    },
+    {
+      "title": "Get component by script type (optional guard)",
+      "when": "Returns null if missing; call before AddComponent to avoid duplicates.",
+      "keywords": ["has", "check", "exists", "duplicate", "存在"],
+      "requestTemplate": {
+        "mode": "invoke",
+        "targetType": "UnityEngine.GameObject",
+        "member": "GetComponent",
+        "args": ["YourNamespace.DemoBehaviour"],
+        "objectSelector": { "gameObjectName": "DemoCube" },
+        "dryRun": false
+      }
+    }
+  ]
+}

@@ -1,17 +1,19 @@
-# Demo Quick Run
+# Demo Quick Run (Transform + Script attach)
 
-## Demo Scope
+## What this validates
 
-- Animation flow: change animator speed/parameter.
-- Particle flow: change emission rate/lifetime.
+- **Anti-pattern**: separate MCP tools for “set position”, “set rotation”, …
+- **Target pattern**: one `unity_reflect_call` with `targetType` + `member` + `args`:
+  - `UnityEngine.Transform` + `position` / `eulerAngles` / …
+  - `UnityEngine.GameObject` + `AddComponent` + `[ "Full.Type.Name" ]`
 
 ## Preconditions
 
-- Unity project opened with the prototype plugin containing `ReflectCallTool.cs`.
-- Python 3.11+ installed.
-- Unity bridge endpoint reachable at `http://127.0.0.1:7890`.
+- Unity project with bridge exposing `POST /unity_reflect_call` (wired to `ReflectCallTool.HandleCommand`).
+- Scene object named `DemoCube` with `Transform`.
+- A demo behaviour class (e.g. `DemoBehaviour`) already exists in the project for attach demo.
 
-## Start MCP Server
+## MCP server
 
 ```bash
 cd prototype/unity-mcp-min/Server
@@ -19,14 +21,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-## Run Demo Flows
+## Scripts
 
-- Follow `scripts/animation-demo.md`.
-- Follow `scripts/particle-demo.md`.
-
-## Expected Result
-
-- `unity_reflect_call` returns `ok=true` on execution call.
-- `unity_validate_result` returns `accepted=true`.
-- Scene behavior changes are visible in Unity.
-
+- `scripts/transform-demo.md`
+- `scripts/scripting-demo.md`

@@ -9,7 +9,7 @@
 ## Tool Surface
 
 - `unity_reflect_call`：通用反射调用（`get/set/invoke` + `dryRun`）
-- `unity_schema_hint`：按领域给参数模板（animation/particles）
+- `unity_schema_hint`：按领域给参数模板（`transform` / `scripting`）
 - `unity_validate_result`：轻量验收（accept/retry）
 
 ## Project Layout
@@ -32,7 +32,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-4. 按 `demo/README.md` 执行动画与粒子 Demo。
+4. 按 `demo/README.md` 执行 **Transform** 与 **挂载脚本** Demo。
 
 ## Why Not 200+ Tools
 
@@ -43,6 +43,6 @@ python main.py
 ## Current Scope
 
 - 仅 Editor 场景
-- 仅 Animation + ParticleSystem
+- MVP 验证：**Transform 属性（position / rotation 等）** + **向 GameObject 挂载已有脚本类型（AddComponent）**
 - 原型性质，优先验证路径而非全覆盖
 

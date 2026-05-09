@@ -1,0 +1,44 @@
+{
+  "domain": "transform",
+  "templates": [
+    {
+      "title": "Set Transform world position",
+      "when": "Move an object in world space.",
+      "keywords": ["position", "move", "translate", "坐标", "位置"],
+      "requestTemplate": {
+        "mode": "set",
+        "targetType": "UnityEngine.Transform",
+        "member": "position",
+        "args": [{ "x": 0, "y": 1, "z": 0 }],
+        "objectSelector": { "gameObjectName": "DemoCube" },
+        "dryRun": false
+      }
+    },
+    {
+      "title": "Set Transform local position",
+      "when": "Move relative to parent.",
+      "keywords": ["local", "parent", "局部"],
+      "requestTemplate": {
+        "mode": "set",
+        "targetType": "UnityEngine.Transform",
+        "member": "localPosition",
+        "args": [{ "x": 0, "y": 0.5, "z": 0 }],
+        "objectSelector": { "gameObjectName": "DemoCube" },
+        "dryRun": false
+      }
+    },
+    {
+      "title": "Set Transform rotation (euler)",
+      "when": "Rotate without a separate rotation-only tool.",
+      "keywords": ["rotate", "rotation", "euler", "旋转"],
+      "requestTemplate": {
+        "mode": "set",
+        "targetType": "UnityEngine.Transform",
+        "member": "eulerAngles",
+        "args": [{ "x": 0, "y": 90, "z": 0 }],
+        "objectSelector": { "gameObjectName": "DemoCube" },
+        "dryRun": false
+      }
+    }
+  ]
+}

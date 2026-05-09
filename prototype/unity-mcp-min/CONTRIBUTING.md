@@ -24,6 +24,7 @@
   - `when`
   - `keywords`
   - `requestTemplate`
+- `domain` 使用 `transform` 或 `scripting`（可扩展）。
 - `requestTemplate` 必须可 dry-run。
 
 ## Coding Notes

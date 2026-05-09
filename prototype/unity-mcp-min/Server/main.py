@@ -25,7 +25,7 @@ class ReflectCallRequest(BaseModel):
 
 
 class SchemaHintRequest(BaseModel):
-    domain: Literal["animation", "particles"]
+    domain: Literal["transform", "scripting"]
     intent: str = Field(min_length=3)
 
 
@@ -95,7 +95,7 @@ async def unity_reflect_call(
 @mcp.tool()
 def unity_schema_hint(domain: str, intent: str) -> dict[str, Any]:
     """
-    Return intent-based request templates for animation/particles.
+    Return intent-based reflection templates (transform / scripting).
     """
     try:
         request = SchemaHintRequest(domain=domain, intent=intent)

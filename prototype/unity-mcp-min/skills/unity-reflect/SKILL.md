@@ -1,67 +1,48 @@
 ---
 name: unity-reflect-minimal
-description: Use minimal Unity MCP tools to operate Animator and ParticleSystem safely through reflection templates.
+description: Minimal Unity MCP — one reflection tool for Transform edits and script attachment via parameters + progressive Skill guidance.
 ---
 
 # Unity Reflect Minimal Skill
 
 ## Purpose
 
-Operate Unity Editor with a tiny tool surface:
+Use **one execution surface** (`unity_reflect_call`): same JSON shape for moving objects (`Transform.position`, etc.) and mounting behaviours (`GameObject.AddComponent(Type)`). Avoid separate tools like “set position” vs “set rotation”.
 
-- `unity_schema_hint`
-- `unity_reflect_call`
-- `unity_validate_result`
+Supporting tools:
 
-This skill prioritizes reproducibility and safety over broad free-form invocation.
+- `unity_schema_hint` — pick `transform` or `scripting` templates from intent text
+- `unity_validate_result` — accept / retry
 
 ## Progressive Disclosure
 
-### L1 Metadata (always-on intent routing)
+### L1 — When to use
 
-Use this skill when the user asks to:
+Use when the user wants to:
 
-- adjust animation speed/parameters/state transitions
-- tune particle emission/lifetime/playback
-- execute Unity changes while keeping tools minimal
+- change **Transform** properties (position, rotation, scale, local vs world)
+- **attach** an existing MonoBehaviour / Component type to a named GameObject
 
-### L2 Workflow (default execution policy)
+### L2 — Fixed workflow
 
-For each user task:
+1. Classify domain: `transform` or `scripting`.
+2. `unity_schema_hint(domain=..., intent="...")`.
+3. Take top template → set `dryRun=true` → `unity_reflect_call`.
+4. On success, same payload with `dryRun=false`.
+5. `unity_validate_result`.
 
-1. **Classify domain** (`animation` or `particles`).
-2. **Call `unity_schema_hint`** with user intent.
-3. **Select highest score template**, then set `dryRun=true`.
-4. **Call `unity_reflect_call`** (dry-run) to validate signature and selector.
-5. If dry-run is valid, run same request with `dryRun=false`.
-6. **Call `unity_validate_result`** to decide accept/retry.
-7. If failed, retry once by:
-   - changing selector (gameObjectName/instanceId), or
-   - choosing next hint template.
+One retry: fix `gameObjectName`, use fully qualified script type, or pick next template.
 
-### L3 References (on-demand)
+### L3 — Deep references
 
-- `references/animation.md`
-- `references/particles.md`
+- `references/transform.md`
+- `references/scripting.md`
 
-Use references when:
+## Completion
 
-- dry-run fails on overload or argument type
-- nested module APIs are needed
-- objectSelector requires correction
+Done when `unity_reflect_call` returns `ok=true`, Unity scene reflects the change, and validation `accepted=true`.
 
-## Safety Rules
+## Notes
 
-- Never bypass denylist members.
-- Prefer instance selection via stable object name or explicit instanceId.
-- Mutating calls must pass dry-run first unless the user explicitly says to skip.
-- When reflection returns ambiguity, ask for a fully qualified type.
-
-## Completion Criteria
-
-The task is complete only when:
-
-- tool response shows `ok=true`
-- expected value/state has been changed
-- validation verdict is `accept`
-
+- **Script authoring**: this MVP covers **attaching an existing type** already in the project. Generating new `.cs` files is a separate editor workflow.
+- **Unity-side design**: execution is generic reflection (resolve instance → resolve member → bind args → get/set/invoke). No per-operation `switch("setPosition")` in app code.

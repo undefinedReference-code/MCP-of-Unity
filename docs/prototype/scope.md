@@ -13,9 +13,9 @@ This prototype validates a different approach: keep MCP tools minimal and drive 
 ## In Scope
 
 - Editor-only workflows (no runtime build pipeline support)
-- Two verticals:
-  - Animation (`Animator`)
-  - Particles (`ParticleSystem`)
+- Two MVP verticals:
+  - **Transform** (`UnityEngine.Transform` properties)
+  - **Script attach** (`GameObject.AddComponent(Type)`, optional `GetComponent(Type)` guard)
 - Core MCP tools:
   - `unity_reflect_call`
   - `unity_schema_hint`
@@ -38,8 +38,8 @@ This prototype validates a different approach: keep MCP tools minimal and drive 
 
 - Exposed tools <= 3
 - Two end-to-end demo tasks pass:
-  - change animation parameter/speed
-  - change particle emission/lifetime
+  - change **Transform** position (same tool as rotation: different `member`)
+  - **attach** an existing behaviour via **AddComponent**
 - From fresh setup to first successful tool call <= 30 minutes
 - Structured, retry-friendly errors on invalid parameters
 - Safety policy docs complete and understandable
