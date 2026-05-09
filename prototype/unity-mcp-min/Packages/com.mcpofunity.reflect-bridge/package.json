@@ -1,0 +1,14 @@
+{
+  "name": "com.mcpofunity.reflect-bridge",
+  "version": "0.1.0",
+  "displayName": "MCP Reflect Bridge",
+  "description": "HTTP bridge exposing ReflectCallTool for unity_reflect_call MCP (localhost JSON API).",
+  "unity": "2021.3",
+  "documentationUrl": "https://github.com/",
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  },
+  "author": {
+    "name": "MCP-of-Unity prototype"
+  }
+}

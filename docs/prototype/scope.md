@@ -16,6 +16,7 @@ This prototype validates a different approach: keep MCP tools minimal and drive 
 - Two MVP verticals:
   - **Transform** (`UnityEngine.Transform` properties)
   - **Script attach** (`GameObject.AddComponent(Type)`, optional `GetComponent(Type)` guard)
+  - **Scene create** (static `GameObject.CreatePrimitive`, no `objectSelector`)
 - Core MCP tools:
   - `unity_reflect_call`
   - `unity_schema_hint`
@@ -40,6 +41,7 @@ This prototype validates a different approach: keep MCP tools minimal and drive 
 - Two end-to-end demo tasks pass:
   - change **Transform** position (same tool as rotation: different `member`)
   - **attach** an existing behaviour via **AddComponent**
+  - **create** a primitive via **CreatePrimitive** (no prior GameObject)
 - From fresh setup to first successful tool call <= 30 minutes
 - Structured, retry-friendly errors on invalid parameters
 - Safety policy docs complete and understandable

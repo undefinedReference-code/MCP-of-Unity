@@ -1,0 +1,17 @@
+{
+  "domain": "scene",
+  "templates": [
+    {
+      "title": "Create primitive (e.g. Cube)",
+      "when": "No existing GameObject — use static GameObject.CreatePrimitive(PrimitiveType).",
+      "keywords": ["create", "spawn", "new", "primitive", "cube", "sphere", "capsule", "cylinder", "plane", "quad", "新建", "创建"],
+      "requestTemplate": {
+        "mode": "invoke",
+        "targetType": "UnityEngine.GameObject",
+        "member": "CreatePrimitive",
+        "args": ["Cube"],
+        "dryRun": false
+      }
+    }
+  ]
+}

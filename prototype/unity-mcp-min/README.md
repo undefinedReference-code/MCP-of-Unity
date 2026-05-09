@@ -14,7 +14,7 @@
 
 ## Project Layout
 
-- `Unity/Editor/Tools/ReflectCallTool.cs`：Unity 侧反射调用核心
+- `Packages/com.mcpofunity.reflect-bridge/`：**开箱即用 Unity 包**（`ReflectCallTool` + HTTP 桥接 + **Window → MCP Reflect Bridge** 配置窗口）
 - `Server/main.py`：Python MCP server
 - `Server/knowledge/*.json`：模板知识库
 - `skills/unity-reflect/SKILL.md`：渐进披露工作流
@@ -22,8 +22,9 @@
 
 ## Quick Start
 
-1. Unity 工程中集成 `ReflectCallTool.cs` 到 Editor 侧桥接工程。
-2. 启动 Unity 并确保桥接端点可访问（默认 `http://127.0.0.1:7890`）。
+1. 在 Unity 工程的 `Packages/manifest.json` 中用 `file:` 依赖引用  
+   `prototype/unity-mcp-min/Packages/com.mcpofunity.reflect-bridge`（详见包内 `Documentation~/INSTALL.zh.md`）。
+2. 打开 Unity：**Window → MCP Reflect Bridge**，设置端口并 **Start server**（可与 Python 默认 `7890` 一致）。
 3. 启动 Python MCP server：
 
 ```bash
@@ -43,6 +44,6 @@ python main.py
 ## Current Scope
 
 - 仅 Editor 场景
-- MVP 验证：**Transform 属性（position / rotation 等）** + **向 GameObject 挂载已有脚本类型（AddComponent）**
+- MVP 验证：**Transform**、**静态创建物体（CreatePrimitive）**、**挂载已有脚本（AddComponent）**
 - 原型性质，优先验证路径而非全覆盖
 
