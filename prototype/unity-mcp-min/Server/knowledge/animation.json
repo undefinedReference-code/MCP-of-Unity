@@ -1,0 +1,51 @@
+{
+  "domain": "animation",
+  "templates": [
+    {
+      "title": "Set Animator Speed",
+      "when": "Need to speed up or slow down overall animator playback.",
+      "keywords": ["speed", "playback", "faster", "slower"],
+      "requestTemplate": {
+        "mode": "set",
+        "targetType": "UnityEngine.Animator",
+        "member": "speed",
+        "args": [1.5],
+        "objectSelector": {
+          "gameObjectName": "Player"
+        },
+        "dryRun": false
+      }
+    },
+    {
+      "title": "Set Animator Float Parameter",
+      "when": "Need to control blend tree parameters.",
+      "keywords": ["float", "blend", "parameter", "motion"],
+      "requestTemplate": {
+        "mode": "invoke",
+        "targetType": "UnityEngine.Animator",
+        "member": "SetFloat",
+        "args": ["Speed", 1.5],
+        "objectSelector": {
+          "gameObjectName": "Player"
+        },
+        "dryRun": false
+      }
+    },
+    {
+      "title": "Set Animator Bool Parameter",
+      "when": "Need to toggle transitions.",
+      "keywords": ["bool", "flag", "state", "transition"],
+      "requestTemplate": {
+        "mode": "invoke",
+        "targetType": "UnityEngine.Animator",
+        "member": "SetBool",
+        "args": ["IsMoving", true],
+        "objectSelector": {
+          "gameObjectName": "Player"
+        },
+        "dryRun": false
+      }
+    }
+  ]
+}
+
