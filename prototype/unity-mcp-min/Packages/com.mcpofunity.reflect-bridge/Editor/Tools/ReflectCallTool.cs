@@ -22,7 +22,7 @@ namespace UnityMcpMin.Editor.Tools
             "UnityEditor"
         };
 
-        private static readonly HashSet<string> DeniedMembers = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> DeniedMembers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "DeleteAsset",
             "MoveAssetToTrash",
@@ -41,7 +41,7 @@ namespace UnityMcpMin.Editor.Tools
             JObject objectSelector);
 
         private static readonly Dictionary<string, ReflectModeHandler> ReflectModeHandlers =
-            new(StringComparer.OrdinalIgnoreCase)
+            new Dictionary<string, ReflectModeHandler>(StringComparer.OrdinalIgnoreCase)
             {
                 ["get"] = (t, m, _, d, s) => ExecuteGet(t, m, d, s),
                 ["set"] = ExecuteSet,
@@ -112,8 +112,11 @@ namespace UnityMcpMin.Editor.Tools
 
                 if (dryRun)
                 {
+                    LogDryRun($"get {BuildSignature(property)}");
                     return Success("Dry-run get resolved.", new
                     {
+                        dryRun = true,
+                        executed = false,
                         mode = "get",
                         member = BuildSignature(property),
                         staticCall = property.GetMethod?.IsStatic ?? false
@@ -140,8 +143,11 @@ namespace UnityMcpMin.Editor.Tools
 
                 if (dryRun)
                 {
+                    LogDryRun($"get {BuildSignature(field)}");
                     return Success("Dry-run get resolved.", new
                     {
+                        dryRun = true,
+                        executed = false,
                         mode = "get",
                         member = BuildSignature(field),
                         staticCall = field.IsStatic
@@ -186,8 +192,11 @@ namespace UnityMcpMin.Editor.Tools
 
                 if (dryRun)
                 {
+                    LogDryRun($"set {BuildSignature(property)}");
                     return Success("Dry-run set resolved.", new
                     {
+                        dryRun = true,
+                        executed = false,
                         mode = "set",
                         member = BuildSignature(property),
                         convertedValue = NormalizeValue(converted)
@@ -222,8 +231,11 @@ namespace UnityMcpMin.Editor.Tools
 
                 if (dryRun)
                 {
+                    LogDryRun($"set {BuildSignature(field)}");
                     return Success("Dry-run set resolved.", new
                     {
+                        dryRun = true,
+                        executed = false,
                         mode = "set",
                         member = BuildSignature(field),
                         convertedValue = NormalizeValue(converted)
@@ -292,8 +304,11 @@ namespace UnityMcpMin.Editor.Tools
 
                 if (dryRun)
                 {
+                    LogDryRun($"invoke {BuildSignature(method)}");
                     return Success("Dry-run invoke resolved.", new
                     {
+                        dryRun = true,
+                        executed = false,
                         mode = "invoke",
                         member = BuildSignature(method),
                         convertedArgs = convertedArgs.Select(NormalizeValue).ToArray()
@@ -303,6 +318,8 @@ namespace UnityMcpMin.Editor.Tools
                 var result = method.Invoke(targetObject, convertedArgs);
                 return Success("Invoke succeeded.", new
                 {
+                    dryRun = false,
+                    executed = true,
                     mode = "invoke",
                     member = BuildSignature(method),
                     result = NormalizeValue(result)
@@ -371,15 +388,18 @@ namespace UnityMcpMin.Editor.Tools
             {
                 if (source is GameObject go)
                 {
-                    var component = go.GetComponent(targetType);
-                    return component != null
-                        ? component
-                        : Error($"Component '{targetType.FullName}' not found on GameObject '{go.name}'.");
+                    var attached = go.GetComponent(targetType);
+                    if (attached != null)
+                    {
+                        return attached;
+                    }
+
+                    return Error($"Component '{targetType.FullName}' not found on GameObject '{go.name}'.");
                 }
 
-                if (source is Component component && targetType.IsAssignableFrom(component.GetType()))
+                if (source is Component src && targetType.IsAssignableFrom(src.GetType()))
                 {
-                    return component;
+                    return src;
                 }
             }
 
@@ -728,6 +748,13 @@ namespace UnityMcpMin.Editor.Tools
                 message,
                 data
             };
+        }
+
+        private static void LogDryRun(string summary)
+        {
+            Debug.Log(
+                $"[MCP Reflect Bridge] Dry-run: {summary} — no scene or editor changes. " +
+                "Send dryRun:false (or omit dryRun) to execute.");
         }
 
         private class ErrorPayload
